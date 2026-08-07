@@ -1,14 +1,7 @@
-import {
-  Tag,
-  FormGroup,
-  MenuItem,
-  Collapse,
-  Button,
-  Intent,
-} from "@blueprintjs/core";
-import { Clipboard, Duplicate, HeartBroken } from "@blueprintjs/icons";
+import { Tag, FormGroup, MenuItem, Collapse, Button } from "@blueprintjs/core";
+import { Duplicate, HeartBroken } from "@blueprintjs/icons";
 import { InputButtonPair } from "../controls/input-button-pair";
-import { toaster } from "../toaster";
+import { copyTextToClipboard } from "../utils/share";
 import { displayFromPeerId, useRemotePeers } from "./remote-peers";
 import { JSX } from "react";
 
@@ -21,22 +14,13 @@ export function RemotePeerControls() {
   }
 
   let coreControl: JSX.Element;
-  // Copied to keyboard success toaster
-  async function copyToaster() {
-    await navigator.clipboard.writeText(displayName);
-    toaster.show({
-      message: "Hostname copied to clipboard",
-      intent: Intent.SUCCESS,
-      icon: <Clipboard />,
-    });
-  }
   // Copy to keyboard button
   const copyButton = (
     <Button
       minimal
       icon={<Duplicate />}
-      onClick={async () => {
-        await copyToaster();
+      onClick={() => {
+        void copyTextToClipboard(displayName, "Hostname copied to clipboard");
       }}
     />
   );

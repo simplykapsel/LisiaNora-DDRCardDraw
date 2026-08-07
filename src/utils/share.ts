@@ -182,7 +182,25 @@ export function downloadDataUrl(dataUrl: string, filename: string) {
 
 export async function copyTextToClipboard(text: string, toastSuccess?: string) {
   try {
-    await navigator.clipboard.writeText(text);
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.append(textarea);
+      textarea.focus();
+      textarea.select();
+
+      try {
+        if (!document.execCommand("copy")) {
+          throw new Error("The browser rejected the copy command");
+        }
+      } finally {
+        textarea.remove();
+      }
+    }
     toaster.show(
       {
         message: toastSuccess || "Copied to clipboard",

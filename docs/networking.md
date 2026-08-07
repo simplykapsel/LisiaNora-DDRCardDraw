@@ -15,6 +15,16 @@ The first step to using the network features is choosing a hostname for each dev
 
 Once a hostname is chosen, that device can connect to one or more other devices (peers) by entering a valid full hostname, additional 4 digits included. While connected to at least one other peer, an addtional two actions will become available on each drawn set of cards.
 
+### Offline LAN mode
+
+Networking can run without internet when all devices are connected to the same local network. On the computer that will act as the host, run:
+
+```sh
+npm run start:lan
+```
+
+The terminal prints one or more addresses ending in `?p2p=lan`. Open the same printed address on every device. Keep the command running for the duration of the session. The host computer must allow inbound TCP connections on ports 8080 and 9000 through its firewall.
+
 ## Network Actions
 
 ### Send Drawn Set

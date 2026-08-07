@@ -1,5 +1,5 @@
 import { create, StoreApi } from "zustand";
-import type { Peer, DataConnection } from "peerjs";
+import type { Peer, DataConnection, PeerJSOption } from "peerjs";
 import { Drawing } from "../models/Drawing";
 import { useDrawState } from "../draw-state";
 import { toaster } from "../toaster";
@@ -58,6 +58,56 @@ export function displayFromPeerId(id: string) {
 
 function peerId(name: string, pin: string) {
   return `ddr-tools ${name}_${pin}`;
+}
+
+function peerServerOptions(): PeerJSOption {
+  const isLanMode =
+    new URL(window.location.href).searchParams.get("p2p") === "lan";
+
+  if (isLanMode) {
+    return {
+      host: window.location.hostname,
+      port: 9000,
+      path: "/peerjs",
+      secure: false,
+      config: {
+        iceServers: [],
+      },
+    };
+  }
+
+  return {
+    config: {
+      iceServers: [
+        {
+          urls: "stun:stun.l.google.com:19302",
+        },
+        {
+          urls: "stun:stun.relay.metered.ca:80",
+        },
+        {
+          urls: "turn:a.relay.metered.ca:80",
+          username: "715941586bb093eb00e8c157",
+          credential: "vjDASx0W340EwkUY",
+        },
+        {
+          urls: "turn:a.relay.metered.ca:80?transport=tcp",
+          username: "715941586bb093eb00e8c157",
+          credential: "vjDASx0W340EwkUY",
+        },
+        {
+          urls: "turn:a.relay.metered.ca:443",
+          username: "715941586bb093eb00e8c157",
+          credential: "vjDASx0W340EwkUY",
+        },
+        {
+          urls: "turn:a.relay.metered.ca:443?transport=tcp",
+          username: "715941586bb093eb00e8c157",
+          credential: "vjDASx0W340EwkUY",
+        },
+      ],
+    },
+  };
 }
 
 function bindPeer(peer: Peer, resolve: () => void, reject: () => void) {
@@ -174,7 +224,7 @@ export const useRemotePeers = create<RemotePeerStore>((set, get) => ({
     if (!peerId) {
       return Promise.reject("invalid peer id");
     }
-    return new Promise((res) => {
+    return new Promise((res, rej) => {
       const conn = thisPeer.connect(peerIdFromDisplay(peerId));
       conn.on("open", () => {
         bindPeerConn(conn);
@@ -184,6 +234,7 @@ export const useRemotePeers = create<RemotePeerStore>((set, get) => ({
         });
         res();
       });
+      conn.on("error", rej);
     });
   },
   async setName(newName) {
@@ -200,36 +251,10 @@ export const useRemotePeers = create<RemotePeerStore>((set, get) => ({
       const peerLib = await import("peerjs");
       const ret = new Promise<void>((res, rej) => {
         const newPin = genPin();
-        const peer = new peerLib.Peer(peerId(newName, newPin), {
-          host: "peering.ddr.tools",
-          config: {
-            iceServers: [
-              {
-                urls: "stun:stun.relay.metered.ca:80",
-              },
-              {
-                urls: "turn:a.relay.metered.ca:80",
-                username: "715941586bb093eb00e8c157",
-                credential: "vjDASx0W340EwkUY",
-              },
-              {
-                urls: "turn:a.relay.metered.ca:80?transport=tcp",
-                username: "715941586bb093eb00e8c157",
-                credential: "vjDASx0W340EwkUY",
-              },
-              {
-                urls: "turn:a.relay.metered.ca:443",
-                username: "715941586bb093eb00e8c157",
-                credential: "vjDASx0W340EwkUY",
-              },
-              {
-                urls: "turn:a.relay.metered.ca:443?transport=tcp",
-                username: "715941586bb093eb00e8c157",
-                credential: "vjDASx0W340EwkUY",
-              },
-            ],
-          },
-        });
+        const peer = new peerLib.Peer(
+          peerId(newName, newPin),
+          peerServerOptions(),
+        );
         bindPeer(peer, res, rej);
         set({
           instanceName: newName,
